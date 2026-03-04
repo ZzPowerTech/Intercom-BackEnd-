@@ -17,6 +17,15 @@ export class Post {
   @Column()
   title: string;
 
+  @Column({ nullable: true })
+  category: string;
+
+  @Column({ nullable: true })
+  subtitle: string;
+
+  @Column('simple-array', { nullable: true })
+  images: string[];
+
   @Column('text')
   content: string;
 

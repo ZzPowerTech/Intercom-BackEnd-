@@ -7,7 +7,13 @@ import {
   Param,
   Delete,
   UseGuards,
+  UseInterceptors,
+  UploadedFiles,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -19,8 +25,21 @@ export class PostsController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() createPostDto: CreatePostDto) {
-    return this.postsService.create(createPostDto);
+  @UseInterceptors(FilesInterceptor('images', 6))
+  create(
+    @Body() createPostDto: CreatePostDto,
+    @UploadedFiles(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), // 2MB
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/i }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    files?: Express.Multer.File[],
+  ) {
+    return this.postsService.create(createPostDto, files);
   }
 
   @Get()
@@ -35,8 +54,22 @@ export class PostsController {
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
-    return this.postsService.update(id, updatePostDto);
+  @UseInterceptors(FilesInterceptor('images', 6))
+  update(
+    @Param('id') id: string,
+    @Body() updatePostDto: UpdatePostDto,
+    @UploadedFiles(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/i }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    files?: Express.Multer.File[],
+  ) {
+    return this.postsService.update(id, updatePostDto, files);
   }
 
   @UseGuards(JwtAuthGuard)

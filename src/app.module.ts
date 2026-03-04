@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { PostsModule } from './posts/posts.module';
 import { AuthModule } from './auth/auth.module';
+import { S3Module } from './s3/s3.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AuthModule } from './auth/auth.module';
       autoLoadEntities: true,
       synchronize: true, // desabilitar em produção
     }),
+    S3Module,
     UserModule,
     PostsModule,
     AuthModule,
