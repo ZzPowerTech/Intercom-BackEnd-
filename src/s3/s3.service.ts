@@ -11,11 +11,15 @@ import * as path from 'path';
 export class S3Service {
   private readonly s3: S3Client;
   private readonly bucket = process.env.MINIO_BUCKET || 'intercom';
+  private readonly internalEndpoint =
+    process.env.MINIO_ENDPOINT || 'http://localhost:9000';
+  private readonly publicEndpoint =
+    process.env.MINIO_PUBLIC_ENDPOINT || this.internalEndpoint;
 
   constructor() {
     this.s3 = new S3Client({
       region: 'us-east-1',
-      endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+      endpoint: this.internalEndpoint,
       credentials: {
         accessKeyId: process.env.MINIO_ACCESS_KEY || '',
         secretAccessKey: process.env.MINIO_SECRET_KEY || '',
@@ -37,13 +41,11 @@ export class S3Service {
       }),
     );
 
-    const endpoint = process.env.MINIO_ENDPOINT || 'http://localhost:9000';
-    return `${endpoint}/${this.bucket}/${key}`;
+    return `${this.publicEndpoint}/${this.bucket}/${key}`;
   }
 
   async delete(url: string): Promise<void> {
-    const endpoint = process.env.MINIO_ENDPOINT || 'http://localhost:9000';
-    const key = url.replace(`${endpoint}/${this.bucket}/`, '');
+    const key = url.replace(`${this.publicEndpoint}/${this.bucket}/`, '');
 
     await this.s3.send(
       new DeleteObjectCommand({
