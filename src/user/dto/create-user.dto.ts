@@ -3,7 +3,6 @@ import {
   IsNotEmpty,
   IsString,
   Matches,
-  MinLength,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -18,6 +17,9 @@ export class CreateUserDto {
   email: string;
 
   @IsString()
-  @MinLength(6, { message: 'A senha deve ter no mínimo 6 caracteres' })
+  @Matches(/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/, {
+    message:
+      'A senha deve ter no mínimo 8 caracteres, incluindo uma letra maiúscula, um número e um caractere especial',
+  })
   password: string;
 }
