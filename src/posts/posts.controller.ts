@@ -13,7 +13,6 @@ import {
   UploadedFiles,
   ParseFilePipe,
   MaxFileSizeValidator,
-  FileTypeValidator,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { PostsService } from './posts.service';
@@ -36,7 +35,6 @@ export class PostsController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), // 2MB
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/i }),
         ],
         fileIsRequired: false,
       }),
@@ -68,7 +66,6 @@ export class PostsController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }),
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/i }),
         ],
         fileIsRequired: false,
       }),

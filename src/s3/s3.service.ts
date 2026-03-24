@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   S3Client,
   PutObjectCommand,
@@ -6,6 +6,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
 import * as path from 'path';
+import { fileTypeFromBuffer } from 'file-type';
 
 @Injectable()
 export class S3Service {
@@ -29,6 +30,13 @@ export class S3Service {
   }
 
   async upload(file: Express.Multer.File): Promise<string> {
+    const detected = await fileTypeFromBuffer(file.buffer);
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+
+    if (!detected || !allowed.includes(detected.mime)) {
+      throw new BadRequestException('Tipo de arquivo inválido');
+    }
+
     const ext = path.extname(file.originalname);
     const key = `posts/${randomUUID()}${ext}`;
 
@@ -37,7 +45,7 @@ export class S3Service {
         Bucket: this.bucket,
         Key: key,
         Body: file.buffer,
-        ContentType: file.mimetype,
+        ContentType: detected.mime,
         ACL: 'public-read', // Torna o objeto público
       }),
     );
