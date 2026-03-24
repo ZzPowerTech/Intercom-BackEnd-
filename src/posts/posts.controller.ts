@@ -1,11 +1,13 @@
 import {
   Controller,
+  ForbiddenException,
   Get,
   Post,
   Body,
   Patch,
   Param,
   Delete,
+  Logger,
   Query,
   Request,
   UseGuards,
@@ -23,6 +25,8 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('posts')
 export class PostsController {
+  private readonly logger = new Logger(PostsController.name);
+
   constructor(private readonly postsService: PostsService) {}
 
   @UseGuards(JwtAuthGuard)
@@ -64,20 +68,34 @@ export class PostsController {
     @Request() req: { user: { id: string } },
     @UploadedFiles(
       new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }),
-        ],
+        validators: [new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 })],
         fileIsRequired: false,
       }),
     )
     files?: Express.Multer.File[],
   ) {
-    return this.postsService.update(id, updatePostDto, req.user.id, files);
+    return this.postsService
+      .update(id, updatePostDto, req.user.id, files)
+      .catch((error: unknown) => {
+        if (error instanceof ForbiddenException) {
+          this.logger.warn(
+            `Tentativa de acesso negado: userId=${req.user.id} recurso=post:${id}`,
+          );
+        }
+        throw error;
+      });
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string, @Request() req: { user: { id: string } }) {
-    return this.postsService.remove(id, req.user.id);
+    return this.postsService.remove(id, req.user.id).catch((error: unknown) => {
+      if (error instanceof ForbiddenException) {
+        this.logger.warn(
+          `Tentativa de acesso negado: userId=${req.user.id} recurso=post:${id}`,
+        );
+      }
+      throw error;
+    });
   }
 }
