@@ -2,19 +2,25 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 
+function validateRequiredEnvironment(): void {
+  const required = ['JWT_SECRET', 'DB_PASSWORD', 'MINIO_SECRET_KEY'];
+  const missing = required.filter((name) => !process.env[name]);
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Variáveis de ambiente obrigatórias ausentes: ${missing.join(', ')}`,
+    );
+  }
+}
+
 async function bootstrap() {
+  validateRequiredEnvironment();
+
   const app = await NestFactory.create(AppModule);
 
-  // Configuração de CORS
   app.enableCors({
-    origin: true, // Aceita qualquer origem (sem frontend específico)
+    origin: true,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-    exposedHeaders: ['Content-Range', 'X-Content-Range', 'X-Total-Count'],
-    maxAge: 86400,
-    preflightContinue: false,
-    optionsSuccessStatus: 200,
   });
 
   app.useGlobalPipes(
