@@ -6,6 +6,8 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
+  Request,
   UseGuards,
   UseInterceptors,
   UploadedFiles,
@@ -18,6 +20,7 @@ import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Controller('posts')
 export class PostsController {
@@ -28,6 +31,7 @@ export class PostsController {
   @UseInterceptors(FilesInterceptor('images', 6))
   create(
     @Body() createPostDto: CreatePostDto,
+    @Request() req: { user: { id: string } },
     @UploadedFiles(
       new ParseFilePipe({
         validators: [
@@ -39,12 +43,13 @@ export class PostsController {
     )
     files?: Express.Multer.File[],
   ) {
-    return this.postsService.create(createPostDto, files);
+    const payload = { ...createPostDto, authorId: req.user.id };
+    return this.postsService.create(payload, files);
   }
 
   @Get()
-  findAll() {
-    return this.postsService.findAll();
+  findAll(@Query() query: PaginationQueryDto) {
+    return this.postsService.findAll(query.page, query.limit);
   }
 
   @Get(':id')
@@ -58,6 +63,7 @@ export class PostsController {
   update(
     @Param('id') id: string,
     @Body() updatePostDto: UpdatePostDto,
+    @Request() req: { user: { id: string } },
     @UploadedFiles(
       new ParseFilePipe({
         validators: [
@@ -69,12 +75,12 @@ export class PostsController {
     )
     files?: Express.Multer.File[],
   ) {
-    return this.postsService.update(id, updatePostDto, files);
+    return this.postsService.update(id, updatePostDto, req.user.id, files);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.postsService.remove(id);
+  remove(@Param('id') id: string, @Request() req: { user: { id: string } }) {
+    return this.postsService.remove(id, req.user.id);
   }
 }

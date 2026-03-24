@@ -1,8 +1,4 @@
-import {
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreatePostDto {
   @IsString()
@@ -20,8 +16,4 @@ export class CreatePostDto {
   @IsString()
   @IsNotEmpty({ message: 'O conteúdo é obrigatório' })
   content: string;
-
-  @IsString()
-  @IsNotEmpty({ message: 'O authorId é obrigatório' })
-  authorId: string;
 }
