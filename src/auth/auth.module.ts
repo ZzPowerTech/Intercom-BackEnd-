@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { UserModule } from '../user/user.module';
+import { StringValue } from 'ms';
 
 @Module({
   imports: [
@@ -16,7 +17,12 @@ import { UserModule } from '../user/user.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '24h' },
+        signOptions: {
+          expiresIn: (config.get<string>('JWT_EXPIRES_IN') ??
+            '15m') as StringValue,
+          issuer: config.get<string>('JWT_ISSUER') ?? 'api-intercom',
+          audience: config.get<string>('JWT_AUDIENCE') ?? 'api-intercom-client',
+        },
       }),
     }),
   ],

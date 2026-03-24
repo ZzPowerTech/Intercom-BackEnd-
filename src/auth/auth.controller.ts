@@ -21,15 +21,22 @@ export class AuthController {
     @Request() req: { ip?: string },
   ) {
     const user = await this.userService.create(createUserDto);
-    this.logger.log(`Registro de usuário: ${user.email} | IP: ${req.ip ?? '-'}`);
+    this.logger.log(
+      `Registro de usuário: ${user.email} | IP: ${req.ip ?? '-'}`,
+    );
     return user;
   }
 
   @Post('login')
   @Throttle({ default: { ttl: 60_000, limit: 5 } })
   async login(@Body() loginDto: LoginDto, @Request() req: { ip?: string }) {
-    const response = await this.authService.login(loginDto.email, loginDto.password);
-    this.logger.log(`Login bem-sucedido: ${loginDto.email} | IP: ${req.ip ?? '-'}`);
+    const response = await this.authService.login(
+      loginDto.email,
+      loginDto.password,
+    );
+    this.logger.log(
+      `Login bem-sucedido: ${loginDto.email} | IP: ${req.ip ?? '-'}`,
+    );
     return response;
   }
 }
