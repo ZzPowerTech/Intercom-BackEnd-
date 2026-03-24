@@ -6,12 +6,14 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('user')
 export class UserController {
@@ -24,8 +26,8 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  findAll() {
-    return this.userService.findAll();
+  findAll(@Query() query: PaginationDto) {
+    return this.userService.findAll(query.page, query.limit);
   }
 
   @UseGuards(JwtAuthGuard)

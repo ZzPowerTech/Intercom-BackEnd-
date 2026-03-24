@@ -38,8 +38,12 @@ export class UserService {
     return result;
   }
 
-  async findAll(): Promise<Omit<User, 'password'>[]> {
-    const users = await this.userRepository.find();
+  async findAll(page = 1, limit = 20): Promise<Omit<User, 'password'>[]> {
+    const users = await this.userRepository.find({
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { name: 'ASC' },
+    });
     return users.map(({ password, ...user }) => user);
   }
 

@@ -19,7 +19,7 @@ import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('posts')
 export class PostsController {
@@ -46,7 +46,7 @@ export class PostsController {
   }
 
   @Get()
-  findAll(@Query() query: PaginationQueryDto) {
+  findAll(@Query() query: PaginationDto) {
     return this.postsService.findAll(query.page, query.limit);
   }
 
