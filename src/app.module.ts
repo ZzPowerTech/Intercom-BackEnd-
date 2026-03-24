@@ -29,7 +29,8 @@ import { S3Module } from './s3/s3.module';
       autoLoadEntities: true,
       synchronize: process.env.NODE_ENV !== 'production',
       migrations: ['dist/migrations/*.js'],
-      migrationsRun: process.env.NODE_ENV === 'production',
+      // Em produção, aplique migrations manualmente no pipeline de deploy.
+      migrationsRun: false,
     }),
     S3Module,
     UserModule,
