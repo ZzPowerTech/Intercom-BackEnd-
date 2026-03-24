@@ -45,7 +45,8 @@ export class PostsService {
       images: imageUrls,
     });
 
-    return this.postRepository.save(post);
+    const savedPost = await this.postRepository.save(post);
+    return this.withSignedImageUrls(savedPost);
   }
 
   async findAll(
