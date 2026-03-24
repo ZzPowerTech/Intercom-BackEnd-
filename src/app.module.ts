@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -11,6 +13,12 @@ import { S3Module } from './s3/s3.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: 10,
+      },
+    ]),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -19,7 +27,9 @@ import { S3Module } from './s3/s3.module';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       autoLoadEntities: true,
-      synchronize: true, // desabilitar em produção
+      synchronize: process.env.NODE_ENV !== 'production',
+      migrations: ['dist/migrations/*.js'],
+      migrationsRun: process.env.NODE_ENV === 'production',
     }),
     S3Module,
     UserModule,
@@ -27,6 +37,12 @@ import { S3Module } from './s3/s3.module';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
