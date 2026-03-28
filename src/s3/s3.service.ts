@@ -19,6 +19,9 @@ export class S3Service {
     process.env.MINIO_ENDPOINT || 'http://localhost:9000';
   private readonly publicEndpoint =
     process.env.MINIO_PUBLIC_ENDPOINT || this.internalEndpoint;
+  private readonly normalizedPublicEndpoint = this.trimTrailingSlash(
+    this.publicEndpoint,
+  );
 
   constructor() {
     this.s3 = new S3Client({
@@ -76,6 +79,11 @@ export class S3Service {
     );
   }
 
+  getPublicUrl(key: string): string {
+    const objectKey = this.extractKey(key);
+    return `${this.normalizedPublicEndpoint}/${this.bucket}/${objectKey}`;
+  }
+
   async getSignedUrl(key: string, expiresIn = 3600): Promise<string> {
     const objectKey = this.extractKey(key);
     const command = new GetObjectCommand({
@@ -87,12 +95,46 @@ export class S3Service {
   }
 
   private extractKey(value: string): string {
-    const basePrefix = `${this.publicEndpoint}/${this.bucket}/`;
+    const normalized = value.trim();
 
-    if (value.startsWith(basePrefix)) {
-      return value.replace(basePrefix, '');
+    const publicPrefix = `${this.normalizedPublicEndpoint}/${this.bucket}/`;
+    if (normalized.startsWith(publicPrefix)) {
+      return normalized.slice(publicPrefix.length);
     }
 
-    return value;
+    const internalPrefix = `${this.trimTrailingSlash(this.internalEndpoint)}/${this.bucket}/`;
+    if (normalized.startsWith(internalPrefix)) {
+      return normalized.slice(internalPrefix.length);
+    }
+
+    if (normalized.startsWith('/')) {
+      const withoutLeadingSlash = normalized.slice(1);
+      if (withoutLeadingSlash.startsWith(`${this.bucket}/`)) {
+        return withoutLeadingSlash.slice(this.bucket.length + 1);
+      }
+
+      return withoutLeadingSlash;
+    }
+
+    if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
+      try {
+        const parsed = new URL(normalized);
+        const path = decodeURIComponent(parsed.pathname).replace(/^\/+/, '');
+
+        if (path.startsWith(`${this.bucket}/`)) {
+          return path.slice(this.bucket.length + 1);
+        }
+
+        return path;
+      } catch {
+        return normalized;
+      }
+    }
+
+    return normalized;
+  }
+
+  private trimTrailingSlash(url: string): string {
+    return url.replace(/\/+$/, '');
   }
 }

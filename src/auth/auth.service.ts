@@ -10,14 +10,16 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
+  private readonly DUMMY_HASH =
+    '$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012';
+
   async validateUser(email: string, password: string) {
     const user = await this.userService.findByEmail(email);
-    if (!user) {
-      throw new UnauthorizedException('Credenciais inválidas');
-    }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
+    const hashToCompare = user ? user.password : this.DUMMY_HASH;
+    const isPasswordValid = await bcrypt.compare(password, hashToCompare);
+
+    if (!user || !isPasswordValid) {
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
