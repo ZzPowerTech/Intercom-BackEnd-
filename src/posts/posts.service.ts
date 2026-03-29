@@ -46,7 +46,7 @@ export class PostsService {
     });
 
     const savedPost = await this.postRepository.save(post);
-    return this.withPublicImageUrls(savedPost);
+    return this.withSignedImageUrls(savedPost);
   }
 
   async findAll(
@@ -54,14 +54,15 @@ export class PostsService {
     limit = 20,
   ): Promise<{ data: Post[]; total: number; page: number; limit: number }> {
     const [posts, total] = await this.postRepository.findAndCount({
-      relations: { author: true },
-      select: { author: { id: true, name: true } },
+      relations: ['author'],
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
     });
 
-    const data = posts.map((post) => this.withPublicImageUrls(post));
+    const data = await Promise.all(
+      posts.map((post) => this.withSignedImageUrls(post)),
+    );
 
     return { data, total, page, limit };
   }
@@ -69,14 +70,13 @@ export class PostsService {
   async findOne(id: string): Promise<Post> {
     const post = await this.postRepository.findOne({
       where: { id },
-      relations: { author: true },
-      select: { author: { id: true, name: true } },
+      relations: ['author'],
     });
     if (!post) {
       throw new NotFoundException('Post não encontrado');
     }
 
-    return this.withPublicImageUrls(post);
+    return this.withSignedImageUrls(post);
   }
 
   async update(
@@ -114,7 +114,7 @@ export class PostsService {
 
     Object.assign(post, updatePostDto);
     const savedPost = await this.postRepository.save(post);
-    return this.withPublicImageUrls(savedPost);
+    return this.withSignedImageUrls(savedPost);
   }
 
   async remove(id: string, userId: string): Promise<{ message: string }> {
@@ -142,15 +142,15 @@ export class PostsService {
     return files.reduce((total, file) => total + file.size, 0);
   }
 
-  private withPublicImageUrls(post: Post): Post {
+  private async withSignedImageUrls(post: Post): Promise<Post> {
     if (!post.images || post.images.length === 0) {
       return post;
     }
 
-    const publicUrls = post.images.map((value) =>
-      this.s3Service.getPublicUrl(value),
+    const signedUrls = await Promise.all(
+      post.images.map((value) => this.s3Service.getSignedUrl(value)),
     );
 
-    return { ...post, images: publicUrls };
+    return { ...post, images: signedUrls };
   }
 }

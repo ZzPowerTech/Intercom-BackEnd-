@@ -15,9 +15,8 @@ import { S3Module } from './s3/s3.module';
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([
       {
-        name: 'default',
         ttl: 60_000,
-        limit: 120,
+        limit: 10,
       },
     ]),
     TypeOrmModule.forRoot({

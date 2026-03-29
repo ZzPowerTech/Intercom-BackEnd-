@@ -10,7 +10,6 @@ import {
   Logger,
   Query,
   Request,
-  Req,
   UseGuards,
   UseInterceptors,
   UploadedFiles,
@@ -50,24 +49,11 @@ export class PostsController {
     return this.postsService.create(payload, files);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
-  async findAll(
-    @Query() query: PaginationDto,
-    @Req() req: { query: Record<string, unknown> },
-  ) {
-    const result = await this.postsService.findAll(query.page, query.limit);
-    const requestedPagination =
-      req.query.page !== undefined || req.query.limit !== undefined;
-
-    if (!requestedPagination) {
-      return result.data;
-    }
-
-    return result;
+  findAll(@Query() query: PaginationDto) {
+    return this.postsService.findAll(query.page, query.limit);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.postsService.findOne(id);
