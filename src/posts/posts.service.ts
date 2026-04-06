@@ -61,7 +61,7 @@ export class PostsService {
     });
 
     const data = await Promise.all(
-      posts.map((post) => this.withSignedImageUrls(post)),
+      posts.map((post) => this.withSignedImageUrls(this.stripAuthorSensitiveFields(post))),
     );
 
     return { data, total, page, limit };
@@ -76,7 +76,7 @@ export class PostsService {
       throw new NotFoundException('Post não encontrado');
     }
 
-    return this.withSignedImageUrls(post);
+    return this.withSignedImageUrls(this.stripAuthorSensitiveFields(post));
   }
 
   async update(
@@ -136,6 +136,12 @@ export class PostsService {
 
     await this.postRepository.remove(post);
     return { message: 'Post removido com sucesso' };
+  }
+
+  private stripAuthorSensitiveFields(post: Post): Post {
+    if (!post.author) return post;
+    const { password: _, email: __, ...safeAuthor } = post.author as any;
+    return { ...post, author: safeAuthor };
   }
 
   private getTotalUploadSize(files: Express.Multer.File[]): number {

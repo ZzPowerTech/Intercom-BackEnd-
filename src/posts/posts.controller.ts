@@ -17,6 +17,7 @@ import {
   MaxFileSizeValidator,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { SkipThrottle } from '@nestjs/throttler';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -49,11 +50,13 @@ export class PostsController {
     return this.postsService.create(payload, files);
   }
 
+  @SkipThrottle()
   @Get()
   findAll(@Query() query: PaginationDto) {
     return this.postsService.findAll(query.page, query.limit);
   }
 
+  @SkipThrottle()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.postsService.findOne(id);
